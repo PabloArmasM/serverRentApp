@@ -194,7 +194,13 @@ const express = require('express'),
 
       var tabla = "vehicleStatus"+myobj.grupo;
       var date = new Date(myobj.fecha);
-      var futuro = new Date(date.getFullYear(), date.getMonth()+4, 0);
+      var fechaActual = new Date();
+
+      if(date.getTime() < fechaActual.getTime())
+        date = fechaActual;
+
+      var futuro = formatMonth(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 4, 0));
+
       console.log("Fecha dentro de 3 meses");
       console.log(futuro);
       var i = 0;
@@ -219,7 +225,7 @@ const express = require('express'),
       while(date.getTime() < futuro.getTime()){
         //await myPromise
         console.log("han pasado "+i+" días");
-        date = new Date(anoInicial, mesInicial, diaInicial +i);
+        date = formatMonth(new Date(anoInicial, mesInicial, diaInicial +i));
         console.log(date);
         var result = await myPromise(date.getTime());
 
@@ -260,6 +266,7 @@ const express = require('express'),
       var myPromise = (fecha) => {
        return new Promise((resolve, reject) => {
             dbo.collection(table).updateOne({ $and: [{ fecha: { $eq : fecha}} , { matricula: {$eq: myobj.matricula}}]}, {$set : {status : myobj.status}}, function(err, result) {
+            console.log(result);
             console.log("Uno creado");
             if(err) reject(err);
             resolve(0);
@@ -272,8 +279,8 @@ const express = require('express'),
     while(date.getTime() < futuro.getTime()){
       //await myPromise
       console.log("han pasado "+i+" días");
-      date = new Date(anoInicial, mesInicial, diaInicial +i);
-      console.log(date);
+      date = formatMonth(new Date(anoInicial, mesInicial, diaInicial +i));
+      console.log(date.getTime());
       var result = await myPromise(date.getTime());
 
       i++;
@@ -282,8 +289,6 @@ const express = require('express'),
   });
 
   });
-
-
 
   app.post('/getVehicleStatus', function(req, res){
     MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
@@ -355,8 +360,32 @@ MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, fu
       console.log("El servidor está inicializado en el puerto 3000");
     });
 
-  var CronJob = require('cron').CronJob;
-  //new CronJob('1 0 0 0 * *', function() {
-  new CronJob('0 0 0 1 * *', function() {
-    console.log('Ha pasado un segundo');
-  }, null, true, 'Atlantic/Canary');
+    function formatMonth(date){
+
+      var month = ("0" + ((date.getMonth()) + 1)).slice(-2);
+      var day = ("0" + ((date.getDate()))).slice(-2);
+
+      return(new Date(date.getFullYear()+"-"+month+"-"+day));
+
+
+    }
+
+function updateState(){
+  var actual = new Date();
+  console.log(actual);
+  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()+4, 1)));
+  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()+4, 0)));
+  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()-4, 1)));
+  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()-4, 0)));
+  console.log("NEWWWW");
+
+
+}
+
+
+  /*var CronJob = require('cron').CronJob;
+  //segundo minut hora dia mes año y dia de la semana
+  new CronJob('* * * * * *', function() {
+  //new CronJob('0 0 0 1 * *', function() {
+    updateState();
+  }, null, true, 'Atlantic/Canary');*/
