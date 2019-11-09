@@ -184,9 +184,10 @@ const express = require('express'),
       });
 
   app.post('/stateVehicle', function (req, res) {
+    console.log("¿alguien me llama?");
     MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, async function(err, db) {
       if (err) {
-          res.send({type: 'danger', message:'No se ha podido obtener el estado de los vehículos'});
+          res.send({type: 'danger', message:'No se ha podido almacenar el estado de los vehículos'});
           throw err;
         }
       var dbo = db.db("mydb");
@@ -211,7 +212,7 @@ const express = require('express'),
 
       var myPromise = (fecha) => {
        return new Promise((resolve, reject) => {
-          var insert = { matricula:myobj.matricula, status:0, fecha:fecha};
+          var insert = { _id: {matricula:myobj.matricula, fecha:fecha}, status:0};
           dbo.collection(tabla).insertOne(insert, function(err, insertResult){
             console.log("Uno creado");
             if(err) reject(err);
@@ -265,8 +266,13 @@ const express = require('express'),
 
       var myPromise = (fecha) => {
        return new Promise((resolve, reject) => {
-            dbo.collection(table).updateOne({ $and: [{ fecha: { $eq : fecha}} , { matricula: {$eq: myobj.matricula}}]}, {$set : {status : myobj.status}}, function(err, result) {
-            console.log(result);
+            var id = {_id: {matricula: myobj.matricula, fecha : fecha}};
+            console.log(myobj.status);
+            dbo.collection(table).find(id).toArray(function(err, result) {
+              console.log(result);
+            });
+            dbo.collection(table).updateOne(id, {$set : {status : myobj.status}}, function(err, result) {
+            //dbo.collection(table).updateOne({ $and: [{ fecha: { $eq : fecha}} , { matricula: {$eq: myobj.matricula}}]}, {$set : {status : myobj.status}}, function(err, result) {
             console.log("Uno creado");
             if(err) reject(err);
             resolve(0);
@@ -296,16 +302,17 @@ const express = require('express'),
       var myobj = JSON.parse(Object.keys(req.body)[0]);
       var table = "vehicleStatus"+myobj.grupo;
       delete myobj.grupo;
-      dbo.collection(table).find({ $and: [{ fecha: { $gte : myobj.fechaInicial}} , { fecha: {$lte: myobj.fechaFinal}}]}).toArray(function(err, result) {
+      dbo.collection(table).find({ $and: [{ "_id.fecha": { $gte : myobj.fechaInicial}} , { "_id.fecha": {$lte: myobj.fechaFinal}}]}).toArray(function(err, result) {
         if (err) throw err;
         var send = {};
 
         result.forEach(element =>{ //Buscar la forma de hacer que sea la fecha : {matricula : status} <- Esta es la clave
+          console.log(element);
           var tempObj = {};
-          if(element.fecha in send)
-            tempObj = send[element.fecha];
-          tempObj[element.matricula] = element.status;
-          send[element.fecha] =  tempObj;
+          if(element._id.fecha in send)
+            tempObj = send[element._id.fecha];
+          tempObj[element._id.matricula] = element.status;
+          send[element._id.fecha] =  tempObj;
         });
         console.log(send);
         res.send(JSON.stringify(send));
