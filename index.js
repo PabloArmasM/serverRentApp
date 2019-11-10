@@ -377,22 +377,126 @@ MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, fu
 
     }
 
-function updateState(){
-  var actual = new Date();
-  console.log(actual);
-  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()+4, 1)));
-  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()+4, 0)));
-  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()-4, 1)));
-  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()-4, 0)));
-  console.log("NEWWWW");
 
+
+ function updateCronState(element){
+  MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, async function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("mydb");
+
+    var tabla = "vehicleStatus"+element.grupo;
+    var fechaActual = new Date();
+
+
+    var date =  formatMonth(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 3, 1));
+    var futuro = formatMonth(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 4, 0));
+
+    console.log("PRIMER DIA");
+    console.log(date);
+    console.log("Ultimo dia");
+    console.log(futuro);
+
+    var diaInicial = date.getDate();
+    var anoInicial = date.getFullYear();
+    var mesInicial = date.getMonth();
+
+    var myPromise = (fecha) => {
+     return new Promise((resolve, reject) => {
+        var insert = { _id: {matricula:element.matricula, fecha:fecha}, status:0};
+        dbo.collection(tabla).insertOne(insert, function(err, insertResult){
+          console.log("Uno creado");
+          if(err) reject(err);
+          resolve(0);
+        });
+      });
+    }
+    var i = 0;
+     while(date.getTime() < futuro.getTime()){
+       //await myPromise
+       console.log("han pasado "+i+" días");
+       date = formatMonth(new Date(anoInicial, mesInicial, diaInicial +i));
+       console.log(date);
+       try{
+         var result = await myPromise(date.getTime());
+       }catch(err){
+         console.log(err);
+       }
+
+       i++;
+     }
+
+     var pasado =  formatMonth(new Date(fechaActual.getFullYear(), fechaActual.getMonth() - 3, 0));
+     var date = formatMonth(new Date(fechaActual.getFullYear(), fechaActual.getMonth() - 4, 1));
+
+     console.log("Se supone que el ultimo");
+     console.log(date);
+     console.log("se supone que el primero");
+     console.log(pasado);
+     /*dbo.collection(table).deleteOne(myobj, function(err, obj){
+       if(err){
+         res.send({type: 'danger', message:'No se pudo eliminar el elemento'});
+          throw err;
+       }*/
+
+       var diaInicial = date.getDate();
+       var anoInicial = date.getFullYear();
+       var mesInicial = date.getMonth();
+
+       var myPromise = (fecha) => {
+        return new Promise((resolve, reject) => {
+           var insert = { _id: {matricula:element.matricula, fecha:fecha}, status:0};
+           dbo.collection(tabla).deleteOne(insert, function(err, insertResult){
+             console.log("Uno eliminado");
+             if(err) reject(err);
+             resolve(0);
+           });
+         });
+       }
+       var i = 0;
+        while(date.getTime() < pasado.getTime()){
+          //await myPromise
+          console.log("han pasado "+i+" días");
+          date = formatMonth(new Date(anoInicial, mesInicial, diaInicial +i));
+          console.log(date);
+          try{
+            var result = await myPromise(date.getTime());
+          }catch(err){
+            console.log(err);
+          }
+
+          i++;
+        }
+
+
+     });
 
 }
 
 
-  /*var CronJob = require('cron').CronJob;
+function updateState(){
+  var actual = new Date();
+  /*console.log(actual);
+  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()+4, 1)));
+  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()+4, 0)));
+  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()-4, 1)));
+  console.log(formatMonth(new Date(actual.getFullYear(), actual.getMonth()-4, 0)));
+  console.log("NEWWWW");*/
+
+  MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
+      var dbo = db.db("mydb");
+      dbo.collection("vehiculos").find().toArray(function(err, result) {
+          result.forEach(element => {
+            updateCronState(element);
+          })
+      });
+      db.close();
+  });
+}
+
+
+  var CronJob = require('cron').CronJob;
   //segundo minut hora dia mes año y dia de la semana
-  new CronJob('* * * * * *', function() {
-  //new CronJob('0 0 0 1 * *', function() {
+  //new CronJob('* * * * * *', function() {
+  new CronJob('0 0 0 1 * *', function() {
     updateState();
-  }, null, true, 'Atlantic/Canary');*/
+  }, null, true, 'Atlantic/Canary');
