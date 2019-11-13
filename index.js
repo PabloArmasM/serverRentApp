@@ -13,7 +13,24 @@ const express = require('express'),
     const app = express();
     let port = process.env.PORT || 3000;
 
+  /*  var NoIP = require('no-ip')
 
+var noip = new NoIP({
+  hostname: 'rentapp.servemp3.com',
+  user: 'loedded@gmail.com',
+  pass: 'yomismo12'
+})
+
+noip.on('error', function(err){
+  console.log(err)
+})
+
+noip.on('success', function(isChanged, ip){
+  console.log("Es el exito eh");
+  console.log(isChanged, ip)
+})
+
+noip.update()*/
     app.use(cors());
     app.use(bodyParser.urlencoded({ extended: false }));
     //app.use(body_parser.urlencoded({extended:true}));
