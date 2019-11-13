@@ -80,6 +80,34 @@ noip.update()*/
     });
 
 
+
+    app.post('/updateOP', function (req, res) {
+      MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
+        if (err) throw err;
+        var dbo = db.db("mydb");
+        var myobj = JSON.parse(Object.keys(req.body)[0]);
+        var table = myobj.tabla;
+        delete myobj.tabla;
+
+        var query = {_id : parseInt(myobj._id)};
+        dbo.collection(table).find(query , {$exists: true}).toArray(function(err, result){
+          if(result){
+            delete myobj._id;
+            console.log(myobj);
+            dbo.collection(table).updateOne(query, {$set : myobj}, function(err, result) {
+              if(err) throw err;
+              db.close();
+              res.send(JSON.stringify({_id: result, message : {type: 'success', message:'Se creo el elemento satisfactoriamente'}}));
+            });
+          }else{
+            res.send({type: 'danger', message:'No se pudo actualizar'});
+          }
+        });
+
+      });
+    });
+
+
       app.post('/update', function (req, res) {
         MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
           if (err) throw err;
@@ -103,6 +131,27 @@ noip.update()*/
 
         });
       });
+
+
+      app.post('/addOP', function (req, res) {
+
+        MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
+          if (err) throw err;
+          var dbo = db.db("mydb");
+          var myobj = JSON.parse(Object.keys(req.body)[0]);
+          var table = myobj.tabla;
+          delete myobj.tabla;
+          dbo.collection(table).insertOne(myobj, function(err, result){
+            if (err){
+              res.send({type: 'danger', message:'No se pudo crear el elemento'});
+            }else{
+              res.send(JSON.stringify({message : {type: 'success', message:'Se creo el elemento satisfactoriamente'}}));
+            }
+          });
+          db.close();
+        });
+
+    });
 
 
     //Separar actualizar del guardado
@@ -172,9 +221,7 @@ noip.update()*/
               res.send({type: 'danger', message:'No se pudo encontrar el dato'});
               throw err;
             }
-            console.log(result);
             if(!result){
-              console.log("Hola");
               res.send({type: 'danger', message:'No se pudo encontrar el dato'});
               return;
             }
@@ -201,7 +248,6 @@ noip.update()*/
       });
 
   app.post('/stateVehicle', function (req, res) {
-    console.log("¿alguien me llama?");
     MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, async function(err, db) {
       if (err) {
           res.send({type: 'danger', message:'No se ha podido almacenar el estado de los vehículos'});
@@ -219,8 +265,6 @@ noip.update()*/
 
       var futuro = formatMonth(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 4, 0));
 
-      console.log("Fecha dentro de 3 meses");
-      console.log(futuro);
       var i = 0;
       var diaInicial = date.getDate();
       var anoInicial = date.getFullYear();
@@ -231,7 +275,6 @@ noip.update()*/
        return new Promise((resolve, reject) => {
           var insert = { _id: {matricula:myobj.matricula, fecha:fecha}, status:0};
           dbo.collection(tabla).insertOne(insert, function(err, insertResult){
-            console.log("Uno creado");
             if(err) reject(err);
             resolve(0);
 
@@ -242,9 +285,7 @@ noip.update()*/
 
       while(date.getTime() < futuro.getTime()){
         //await myPromise
-        console.log("han pasado "+i+" días");
         date = formatMonth(new Date(anoInicial, mesInicial, diaInicial +i));
-        console.log(date);
         var result = await myPromise(date.getTime());
 
         i++;
@@ -269,12 +310,6 @@ noip.update()*/
       var futuro = new Date(myobj.fechaEntrada);
       futuro = new Date(futuro.getFullYear(), futuro.getMonth(), futuro.getDate());
 
-
-      console.log("Fecha de salida");
-      console.log(date);
-
-      console.log("Fecha de entrega");
-      console.log(futuro);
       var i = 0;
       var diaInicial = date.getDate();
       var anoInicial = date.getFullYear();
@@ -284,13 +319,10 @@ noip.update()*/
       var myPromise = (fecha) => {
        return new Promise((resolve, reject) => {
             var id = {_id: {matricula: myobj.matricula, fecha : fecha}};
-            console.log(myobj.status);
             dbo.collection(table).find(id).toArray(function(err, result) {
-              console.log(result);
             });
             dbo.collection(table).updateOne(id, {$set : {status : myobj.status}}, function(err, result) {
             //dbo.collection(table).updateOne({ $and: [{ fecha: { $eq : fecha}} , { matricula: {$eq: myobj.matricula}}]}, {$set : {status : myobj.status}}, function(err, result) {
-            console.log("Uno creado");
             if(err) reject(err);
             resolve(0);
 
@@ -301,9 +333,7 @@ noip.update()*/
 
     while(date.getTime() < futuro.getTime()){
       //await myPromise
-      console.log("han pasado "+i+" días");
       date = formatMonth(new Date(anoInicial, mesInicial, diaInicial +i));
-      console.log(date.getTime());
       var result = await myPromise(date.getTime());
 
       i++;
@@ -324,14 +354,12 @@ noip.update()*/
         var send = {};
 
         result.forEach(element =>{ //Buscar la forma de hacer que sea la fecha : {matricula : status} <- Esta es la clave
-          console.log(element);
           var tempObj = {};
           if(element._id.fecha in send)
             tempObj = send[element._id.fecha];
           tempObj[element._id.matricula] = element.status;
           send[element._id.fecha] =  tempObj;
         });
-        console.log(send);
         res.send(JSON.stringify(send));
         db.close();
       });
@@ -408,10 +436,6 @@ MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, fu
     var date =  formatMonth(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 3, 1));
     var futuro = formatMonth(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 4, 0));
 
-    console.log("PRIMER DIA");
-    console.log(date);
-    console.log("Ultimo dia");
-    console.log(futuro);
 
     var diaInicial = date.getDate();
     var anoInicial = date.getFullYear();
@@ -421,7 +445,6 @@ MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, fu
      return new Promise((resolve, reject) => {
         var insert = { _id: {matricula:element.matricula, fecha:fecha}, status:0};
         dbo.collection(tabla).insertOne(insert, function(err, insertResult){
-          console.log("Uno creado");
           if(err) reject(err);
           resolve(0);
         });
@@ -430,9 +453,7 @@ MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, fu
     var i = 0;
      while(date.getTime() < futuro.getTime()){
        //await myPromise
-       console.log("han pasado "+i+" días");
        date = formatMonth(new Date(anoInicial, mesInicial, diaInicial +i));
-       console.log(date);
        try{
          var result = await myPromise(date.getTime());
        }catch(err){
@@ -445,10 +466,6 @@ MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, fu
      var pasado =  formatMonth(new Date(fechaActual.getFullYear(), fechaActual.getMonth() - 3, 0));
      var date = formatMonth(new Date(fechaActual.getFullYear(), fechaActual.getMonth() - 4, 1));
 
-     console.log("Se supone que el ultimo");
-     console.log(date);
-     console.log("se supone que el primero");
-     console.log(pasado);
      /*dbo.collection(table).deleteOne(myobj, function(err, obj){
        if(err){
          res.send({type: 'danger', message:'No se pudo eliminar el elemento'});
@@ -463,7 +480,6 @@ MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, fu
         return new Promise((resolve, reject) => {
            var insert = { _id: {matricula:element.matricula, fecha:fecha}, status:0};
            dbo.collection(tabla).deleteOne(insert, function(err, insertResult){
-             console.log("Uno eliminado");
              if(err) reject(err);
              resolve(0);
            });
@@ -472,9 +488,7 @@ MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, fu
        var i = 0;
         while(date.getTime() < pasado.getTime()){
           //await myPromise
-          console.log("han pasado "+i+" días");
           date = formatMonth(new Date(anoInicial, mesInicial, diaInicial +i));
-          console.log(date);
           try{
             var result = await myPromise(date.getTime());
           }catch(err){
