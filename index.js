@@ -221,7 +221,7 @@ noip.update()*/
               res.send({type: 'danger', message:'No se pudo encontrar el dato'});
               throw err;
             }
-            if(!result){
+            if(!obj){
               res.send({type: 'danger', message:'No se pudo encontrar el dato'});
               return;
             }
@@ -242,6 +242,39 @@ noip.update()*/
                   db.close();
               });
             });
+            db.close();
+          });
+        });
+      });
+
+
+      app.post('/dayRange', function (req, res) {
+        MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
+          if (err){
+            res.send({type: 'danger', message:'No se pudo encontrar el dato'});
+            throw err;
+          }
+          var dbo = db.db("mydb");
+          var myobj = JSON.parse(Object.keys(req.body)[0]);
+          var fechaSalida = myobj.fechaSalida;
+          var fecha = myobj.fecha;
+          var result;
+          console.log("menor que");
+          console.log(fecha);
+          console.log("mayor que");
+          console.log(fechaSalida);
+          dbo.collection("contratos").find({ $and: [{ fechaSalida: { $lte : fecha}} , { fechaSalida: {$gte: fechaSalida}}] }).toArray(function(err, result) {
+            if(err){
+              res.send({type: 'danger', message:'No se pudo encontrar el dato'});
+              throw err;
+            }
+            if(!result){
+              console.log(result);
+              res.send({type: 'danger', message:'No se obtuvo ningun resultado'});
+              return;
+            }
+            console.log(result);
+            res.send(JSON.stringify(result));
             db.close();
           });
         });
