@@ -57,18 +57,27 @@ noip.update()*/
       });
     }
 
-
     app.post('/search', function(req, res){
       try{
         MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
           var dbo = db.db("mydb");
           var myobj = JSON.parse(Object.keys(req.body)[0]);
+          console.log("En la llegada");
+          console.log(myobj);
           if("_id" in myobj){
             myobj._id = parseInt(myobj._id);
             console.log("cambiando o yo que se");
           }
+
           var table = myobj.tabla;
           delete myobj.tabla;
+          console.log("Antes");
+          console.log(myobj);
+          console.log("A VER SI ES AQUI");
+          if("query" in myobj){
+            myobj = {$and : myobj.query};
+          }
+          console.log(myobj);
           dbo.collection(table).find(myobj).toArray(function(err, result) {
             if(err){
               res.send({type: 'danger', message:'No se pudo encontrar el dato'});
