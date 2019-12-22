@@ -75,7 +75,7 @@ noip.update()*/
           console.log(myobj);
           console.log("A VER SI ES AQUI");
           if("query" in myobj){
-            myobj = {$and : myobj.query};
+            myobj = myobj.query;
           }
           console.log(myobj);
           dbo.collection(table).find(myobj).toArray(function(err, result) {
