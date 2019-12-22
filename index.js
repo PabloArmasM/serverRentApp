@@ -601,6 +601,6 @@ function updateState(){
   var CronJob = require('cron').CronJob;
   //segundo minut hora dia mes año y dia de la semana
   //new CronJob('* * * * * *', function() {
-  new CronJob('0 0 0 1 * *', function() {
+  new CronJob('0 0 10 1 * *', function() {
     updateState();
   }, null, true, 'Atlantic/Canary');
