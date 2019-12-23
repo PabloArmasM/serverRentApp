@@ -57,6 +57,55 @@ noip.update()*/
       });
     }
 
+    app.post('/createOrUpdate/', function(req, res){
+      try{
+        MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
+          if (err) throw err;
+          var dbo = db.db("mydb");
+          var myobj = JSON.parse(Object.keys(req.body)[0]);
+          var table = myobj.tabla;
+          var id = myobj._id;
+          delete myobj.tabla;
+          dbo.collection(table).find({_id : id}).toArray(function(err, result) {
+            if(err){
+              res.send({type: 'danger', message:'No se pudo encontrar el dato'});
+              throw err;
+            }
+
+            if(result.length > 0){
+              console.log("Actualizando");
+              var query = {_id : myobj._id};
+              delete myobj._id;
+              dbo.collection(table).updateOne(query, {$set : myobj}, function(err, result) {
+                if(err) throw err;
+                db.close();
+                res.send(JSON.stringify({_id: result, message : {type: 'success', message:'Se creo el elemento satisfactoriamente'}}));
+              });
+            }else{
+              console.log("Insertando");
+              console.log(myobj);
+                dbo.collection(table).insertOne(myobj, function(err, insertResult){
+                  if (err){
+                    getDecSeq(table+"_id");
+                    console.log("pasa algo raro");
+                    res.send({type: 'danger', message:'No se pudo crear el elemento'});
+                  }else{
+                    console.log(insertResult.ops[0]._id);
+                    res.send(JSON.stringify({_id: insertResult.ops[0], message : {type: 'success', message:'Se creo el elemento satisfactoriamente'}}));
+                  }
+                db.close();
+              });
+            }
+            //res.send(JSON.stringify(result));
+            db.close();
+          });
+
+          });
+        }catch(err){
+          console.log(err);
+        }
+    });
+
     app.post('/search', function(req, res){
       try{
         MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
@@ -92,6 +141,38 @@ noip.update()*/
       }
     });
 
+
+
+    app.post('/searchString', function(req, res){
+      try{
+        MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
+          var dbo = db.db("mydb");
+          var myobj = JSON.parse(Object.keys(req.body)[0]);
+          console.log("En la llegada");
+          console.log(myobj);
+
+          var table = myobj.tabla;
+          delete myobj.tabla;
+          console.log("Antes");
+          console.log(myobj);
+          console.log("A VER SI ES AQUI");
+          if("query" in myobj){
+            myobj = myobj.query;
+          }
+          console.log(myobj);
+          dbo.collection(table).find(myobj).toArray(function(err, result) {
+            if(err){
+              res.send({type: 'danger', message:'No se pudo encontrar el dato'});
+              throw err;
+            }
+            res.send(JSON.stringify(result));
+            db.close();
+          });
+        });
+      }catch(err){
+        console.log(err);
+      }
+    });
 
 
     app.post('/updateOP', function (req, res) {
