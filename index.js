@@ -13,27 +13,8 @@ const express = require('express'),
     const app = express();
     let port = process.env.PORT || 3000;
 
-  /*  var NoIP = require('no-ip')
-
-var noip = new NoIP({
-  hostname: 'rentapp.servemp3.com',
-  user: 'loedded@gmail.com',
-  pass: 'yomismo12'
-})
-
-noip.on('error', function(err){
-  console.log(err)
-})
-
-noip.on('success', function(isChanged, ip){
-  console.log("Es el exito eh");
-  console.log(isChanged, ip)
-})
-
-noip.update()*/
     app.use(cors());
     app.use(bodyParser.urlencoded({ extended: false }));
-    //app.use(body_parser.urlencoded({extended:true}));
     app.use(bodyParser.json());
 
     app.get('/', function (req, res) {
@@ -510,48 +491,6 @@ noip.update()*/
       console.log(err);
     }
   });
-
-/*
-MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
-  if (err) throw err;
-  console.log("Database created!");
-  var dbo = db.db("mydb");
-  console.log(req.body.data);
-  var myobj = JSON.parse(req.body);
-  dbo.collection("clientes").insertOne(myobj, function(err, requests) {
-    if (err){
-      res.send(JSON.stringify({error : "No se insertaron"}));
-      throw err;
-    }
-    res.send(JSON.stringify({success : "Información guradada"}));
-    console.log("1 document inserted");
-    db.close();
-  });
-});
-*/
-
-
-
-    // use it before all route definitions
-
-    /*app.use(function (req, res, next) {
-
-        // Website you wish to allow to connect
-        res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
-
-        // Request methods you wish to allow
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-
-        // Request headers you wish to allow
-        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-
-        // Set to true if you need the website to include cookies in the requests sent
-        // to the API (e.g. in case you use sessions)
-        res.setHeader('Access-Control-Allow-Credentials', true);
-
-        // Pass to next layer of middleware
-        next();
-    });*/
 
     app.listen(3000, () => {
       console.log("El servidor está inicializado en el puerto 3000");
